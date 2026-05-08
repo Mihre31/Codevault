@@ -24,10 +24,9 @@ export const useAuthStore = create((set) => ({
     window.history.replaceState({}, "", url.pathname + url.search);
   },
   login: (token) => {
-    if (token) {
-      localStorage.setItem("codevault_token", token);
-    }
+    if (!token) return;
 
+    localStorage.setItem("codevault_token", token);
     set({ isAuthenticated: true });
   },
   logout: () => {

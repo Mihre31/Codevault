@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { useDashboardStore } from "../stores/dashboardStore";
 
 export default function CreateSnippetModal() {
-  const customLanguage = useDashboardStore((state) => state.customDraftLanguage);
+  const customLanguage = useDashboardStore(
+    (state) => state.customDraftLanguage,
+  );
   const language = useDashboardStore((state) => state.draftLanguage);
   const languageOptions = useDashboardStore(
     useShallow((state) => state.getSnippetLanguageOptions()),
@@ -20,14 +23,34 @@ export default function CreateSnippetModal() {
   const setLanguage = useDashboardStore((state) => state.setDraftLanguage);
   const setTitle = useDashboardStore((state) => state.setDraftTitle);
 
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") closeCreateSnippet();
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [closeCreateSnippet]);
+
   return (
-    <section className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm">
+    <section
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-snippet-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) closeCreateSnippet();
+      }}
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm"
+    >
       <form
         onSubmit={createDraftFromForm}
         className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 sm:p-6"
       >
         <div className="mb-5">
-          <h2 className="text-xl font-bold text-slate-950 dark:text-white">
+          <h2
+            id="create-snippet-title"
+            className="text-xl font-bold text-slate-950 dark:text-white"
+          >
             New Snippet
           </h2>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">

@@ -11,10 +11,11 @@ import {
 import { useAuthStore } from "../../../stores/authStore";
 import { createDraftSnippet, getSnippetId } from "../utils/snippetUtils";
 
-function getLanguages(snippets) {
+function getLanguages(snippets, extraLanguages = []) {
   return [
     ...new Set([
       ...defaultLanguages,
+      ...extraLanguages.filter(Boolean),
       ...snippets.map((snippet) => snippet.language).filter(Boolean),
     ]),
   ];
@@ -54,9 +55,17 @@ export const useDashboardStore = create((set, get) => ({
     const { selectedSnippet } = get();
     if (!selectedSnippet) return;
 
-    await navigator.clipboard.writeText(selectedSnippet.code);
-    set({ copied: true });
-    setTimeout(() => set({ copied: false }), 1200);
+    try {
+      set({ error: "" });
+      await navigator.clipboard.writeText(selectedSnippet.code);
+      set({ copied: true });
+      setTimeout(() => set({ copied: false }), 1200);
+    } catch (apiError) {
+      set({
+        error:
+          apiError instanceof Error ? apiError.message : "Unable to copy code.",
+      });
+    }
   },
   createDraftFromForm: (event) => {
     event.preventDefault();
@@ -120,9 +129,12 @@ export const useDashboardStore = create((set, get) => ({
 
     try {
       set({ error: "" });
-      const updatedSnippet = await updateSnippet(getSnippetId(selectedSnippet), {
-        title: trimmedTitle,
-      });
+      const updatedSnippet = await updateSnippet(
+        getSnippetId(selectedSnippet),
+        {
+          title: trimmedTitle,
+        },
+      );
 
       set({
         selectedSnippet: updatedSnippet,
@@ -137,7 +149,13 @@ export const useDashboardStore = create((set, get) => ({
     }
   },
   getFilteredSnippets: () => getFilteredSnippets(get()),
-  getLanguages: () => getLanguages(get().snippets),
+  getLanguages: () => {
+    const { language, selectedSnippet, snippets } = get();
+    return getLanguages(snippets, [
+      language === "All" ? null : language,
+      selectedSnippet?.language,
+    ]);
+  },
   getSnippetLanguageOptions: () =>
     getLanguages(get().snippets).filter(
       (currentLanguage) => currentLanguage !== "All",
@@ -145,8 +163,11 @@ export const useDashboardStore = create((set, get) => ({
   getTotalFavorites: () =>
     get().snippets.filter((snippet) => snippet.favorite).length,
   getTotalLanguages: () =>
-    new Set(get().snippets.map((snippet) => snippet.language).filter(Boolean))
-      .size,
+    new Set(
+      get()
+        .snippets.map((snippet) => snippet.language)
+        .filter(Boolean),
+    ).size,
   loadSnippets: async () => {
     try {
       set({ error: "", isLoading: true });
@@ -210,9 +231,12 @@ export const useDashboardStore = create((set, get) => ({
 
       if (code === selectedSnippet.code) return;
 
-      const updatedSnippet = await updateSnippet(getSnippetId(selectedSnippet), {
-        code,
-      });
+      const updatedSnippet = await updateSnippet(
+        getSnippetId(selectedSnippet),
+        {
+          code,
+        },
+      );
 
       set({
         selectedSnippet: updatedSnippet,
@@ -237,9 +261,12 @@ export const useDashboardStore = create((set, get) => ({
 
     try {
       set({ error: "" });
-      const updatedSnippet = await updateSnippet(getSnippetId(selectedSnippet), {
-        description,
-      });
+      const updatedSnippet = await updateSnippet(
+        getSnippetId(selectedSnippet),
+        {
+          description,
+        },
+      );
 
       set({
         selectedSnippet: updatedSnippet,
