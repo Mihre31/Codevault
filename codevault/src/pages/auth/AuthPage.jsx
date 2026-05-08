@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { login, signup, startGoogleAuth } from "../../services/authApi";
+import { useAuthStore } from "../../stores/authStore";
 
-export default function AuthPage({ onAuthSuccess }) {
+export default function AuthPage() {
   const [mode, setMode] = useState("login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const authenticate = useAuthStore((state) => state.login);
   const isSignup = mode === "signup";
 
   const handleSubmit = async (event) => {
@@ -21,8 +23,7 @@ export default function AuthPage({ onAuthSuccess }) {
         ? await signup({ fullName, email, password })
         : await login({ email, password });
 
-      localStorage.setItem("codevault_token", data.token);
-      onAuthSuccess(data);
+      authenticate(data.token);
     } catch (authError) {
       setError(authError.message);
     } finally {

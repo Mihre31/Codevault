@@ -19,7 +19,13 @@ export default function SnippetActions({
       />
       <IconButton
         onClick={onToggleFavorite}
-        icon={<Star size={17} />}
+        active={isFavorite}
+        icon={
+          <Star
+            size={17}
+            className={isFavorite ? "fill-yellow-400 text-yellow-400" : ""}
+          />
+        }
         label={isFavorite ? "Unfavorite" : "Favorite"}
       />
       <IconButton onClick={onEdit} icon={<Pencil size={17} />} label="Edit" />
