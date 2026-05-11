@@ -1,4 +1,5 @@
 import express from "express";
+import { ENV } from "../config/env.js";
 import {
   getMe,
   googleCallback,
@@ -22,7 +23,7 @@ router.get(
 router.get(
   "/google/callback",
   passport.authenticate("google", {
-    failureRedirect: `${process.env.CLIENT_URL || "http://localhost:5173"}?authError=google`,
+    failureRedirect: `${ENV.CLIENT_URL}?authError=google`,
     session: false,
   }),
   googleCallback,

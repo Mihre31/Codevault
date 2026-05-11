@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { ENV } from "../config/env.js";
 import User from "../models/user.model.js";
 
 export async function protect(req, res, next) {
@@ -14,7 +15,7 @@ export async function protect(req, res, next) {
       throw new Error("Not authorized, token missing");
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, ENV.JWT_SECRET);
     const user = await User.findById(decoded.id);
 
     if (!user) {
