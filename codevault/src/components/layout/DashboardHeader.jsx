@@ -1,4 +1,4 @@
-import { Code2, LogOut, Moon, Plus, Sun } from "lucide-react";
+import { Code2, Filter, LogOut, Moon, Plus, Sun } from "lucide-react";
 import { useDashboardStore } from "../../features/dashboard/stores/dashboardStore";
 
 export default function DashboardHeader() {
@@ -6,9 +6,14 @@ export default function DashboardHeader() {
   const openCreateSnippet = useDashboardStore(
     (state) => state.openCreateSnippet,
   );
+  const isFilterOpen = useDashboardStore((state) => state.isFilterOpen);
+  const language = useDashboardStore((state) => state.language);
+  const query = useDashboardStore((state) => state.query);
   const theme = useDashboardStore((state) => state.theme);
+  const toggleFilters = useDashboardStore((state) => state.toggleFilters);
   const toggleTheme = useDashboardStore((state) => state.toggleTheme);
   const isDark = theme === "dark";
+  const hasActiveFilter = query.trim() !== "" || language !== "All";
 
   return (
     <header className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm transition-colors dark:border dark:border-slate-800 dark:bg-slate-900 sm:p-6 lg:mb-8 lg:flex-row lg:items-center lg:justify-between">
@@ -35,6 +40,19 @@ export default function DashboardHeader() {
         >
           {isDark ? <Sun size={18} /> : <Moon size={18} />}
           {isDark ? "Light" : "Dark"}
+        </button>
+        <button
+          type="button"
+          onClick={toggleFilters}
+          aria-expanded={isFilterOpen}
+          className={`flex h-12 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition ${
+            isFilterOpen || hasActiveFilter
+              ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950"
+              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
+          }`}
+        >
+          <Filter size={18} />
+          Filter
         </button>
         <button
           type="button"

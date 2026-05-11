@@ -1,21 +1,19 @@
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import dotenv from "dotenv";
 import express from "express";
 import connectDB from "./config/db.js";
+import { ENV } from "./config/env.js";
 import passport from "./config/passport.js";
 import authRoutes from "./routes/auth.routes.js";
 import snippetRoutes from "./routes/snippet.routes.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
 
-dotenv.config();
-
 const app = express();
-const port = process.env.PORT || 5000;
+const port = ENV.PORT;
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: ENV.CLIENT_URL,
     credentials: true,
   }),
 );

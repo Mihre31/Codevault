@@ -43,6 +43,7 @@ export const useDashboardStore = create((set, get) => ({
   draftTitle: "",
   error: "",
   isCreateOpen: false,
+  isFilterOpen: false,
   isLoading: true,
   language: "All",
   query: "",
@@ -286,6 +287,8 @@ export const useDashboardStore = create((set, get) => ({
   setLanguage: (language) => set({ language }),
   setQuery: (query) => set({ query }),
   setSelectedSnippet: (selectedSnippet) => set({ selectedSnippet }),
+  toggleFilters: () =>
+    set((state) => ({ isFilterOpen: !state.isFilterOpen })),
   toggleSelectedSnippetFavorite: async () => {
     const { selectedSnippet, snippets } = get();
     if (!selectedSnippet) return;

@@ -1,5 +1,7 @@
 import bcrypt from "bcryptjs";
+import { ENV } from "../config/env.js";
 import User from "../models/user.model.js";
+import { sendWelcomeEmail } from "../utils/email.js";
 import generateToken from "../utils/generateToken.js";
 
 export async function signup(req, res) {
@@ -43,6 +45,15 @@ export async function signup(req, res) {
     await newUser.save();
     const token = generateToken(newUser._id, res);
 
+    try {
+      await sendWelcomeEmail({
+        fullName: newUser.fullName,
+        to: newUser.email,
+      });
+    } catch (emailError) {
+      console.error("Failed to send welcome email:", emailError);
+    }
+
     return res.status(201).json({
       _id: newUser._id,
       fullName: newUser.fullName,
@@ -52,7 +63,10 @@ export async function signup(req, res) {
     });
   } catch (error) {
     console.log("Error in signup controller", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({
+      message: "Internal server error",
+      error: ENV.NODE_ENV === "production" ? undefined : error.message,
+    });
   }
 }
 
@@ -87,7 +101,10 @@ export async function login(req, res) {
     });
   } catch (error) {
     console.log("Error in login controller", error);
-    return res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({
+      message: "Internal server error",
+      error: ENV.NODE_ENV === "production" ? undefined : error.message,
+    });
   }
 }
 
@@ -96,7 +113,7 @@ export function logout(req, res) {
     maxAge: 0,
     httpOnly: true,
     sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
+    secure: ENV.NODE_ENV === "production",
   });
 
   return res.status(200).json({ message: "Logged out successfully" });
@@ -115,7 +132,6 @@ export function getMe(req, res) {
 
 export function googleCallback(req, res) {
   const token = generateToken(req.user._id, res);
-  const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 
-  return res.redirect(`${clientUrl}?token=${encodeURIComponent(token)}`);
+  return res.redirect(`${ENV.CLIENT_URL}?token=${encodeURIComponent(token)}`);
 }
