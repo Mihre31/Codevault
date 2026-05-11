@@ -1,4 +1,4 @@
-import { resendClient, sender } from "../lib/resend.js";
+import { resendClient, sender } from "../libs/resend.js";
 import { createWelcomeEmailTemplate } from "./emailTemplates.js";
 
 export const sendWelcomeEmail = async (email, name, clientURL) => {
@@ -9,7 +9,7 @@ export const sendWelcomeEmail = async (email, name, clientURL) => {
     html: createWelcomeEmailTemplate(name, clientURL),
   });
   if (error) {
-    console.log("Error sending welcome email:", error);
+    console.error("Error sending welcome email");
     throw new Error("Failed to send welcome email");
   }
   console.log("Welcome message sent successfully", data);
