@@ -5,6 +5,7 @@ import connectDB from "./config/db.js";
 import { ENV } from "./config/env.js";
 import passport from "./config/passport.js";
 import authRoutes from "./routes/auth.routes.js";
+import collectionRoutes from "./routes/collection.routes.js";
 import snippetRoutes from "./routes/snippet.routes.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
 
@@ -27,6 +28,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/collections", collectionRoutes);
 app.use("/api/snippets", snippetRoutes);
 
 app.use(notFound);

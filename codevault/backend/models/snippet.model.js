@@ -13,6 +13,12 @@ const snippetSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    collection: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Collection",
+      default: null,
+      index: true,
+    },
     description: {
       type: String,
       default: "",
