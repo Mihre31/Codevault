@@ -81,16 +81,12 @@ export async function sendPasswordResetEmail({ fullName, resetUrl, to }) {
     });
 
     console.log("Password reset email accepted by Resend:", {
-      from,
-      to,
       id: result?.id,
     });
 
     return result;
   } catch (error) {
     console.error("Password reset email failed:", {
-      from,
-      to,
       message: error.message,
     });
     throw error;

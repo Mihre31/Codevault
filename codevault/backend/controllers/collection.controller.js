@@ -55,7 +55,11 @@ export async function updateCollection(req, res, next) {
 
     const { name, description } = req.body;
 
-    if (name !== undefined) collection.name = name;
+    if (name !== undefined && !name.trim()) {
+      res.status(400);
+      if (name !== undefined) collection.name = name;
+      throw new Error("Collection name is required");
+    }
     if (description !== undefined) collection.description = description;
 
     const updatedCollection = await collection.save();
@@ -81,8 +85,8 @@ export async function deleteCollection(req, res, next) {
     }
 
     await Snippet.updateMany(
-      { user: req.user._id, collection: collection._id },
-      { $unset: { collection: "" } },
+      { user: req.user._id, snippetCollection: collection._id },
+      { $unset: { snippetCollection: "" } },
     );
     await collection.deleteOne();
 

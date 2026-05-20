@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { languages as defaultLanguages } from "../../../data/snippets";
 import { useDashboardStore } from "../stores/dashboardStore";
+import { getCollectionId } from "../utils/snippetUtils";
 
 export default function CreateSnippetModal() {
   const collection = useDashboardStore((state) => state.draftCollection);
@@ -161,20 +162,24 @@ export default function CreateSnippetModal() {
             >
               No collection
             </button>
-            {collections.map((currentCollection) => (
-              <button
-                key={currentCollection._id}
-                type="button"
-                onClick={() => setCollection(currentCollection._id)}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                  collection === currentCollection._id
-                    ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950"
-                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                }`}
-              >
-                {currentCollection.name}
-              </button>
-            ))}
+            {collections.map((currentCollection) => {
+              const collectionId = getCollectionId(currentCollection);
+
+              return (
+                <button
+                  key={collectionId || currentCollection.name}
+                  type="button"
+                  onClick={() => setCollection(collectionId || "")}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
+                    collection === collectionId
+                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  }`}
+                >
+                  {currentCollection.name}
+                </button>
+              );
+            })}
             <button
               type="button"
               onClick={() => setCollection("new")}

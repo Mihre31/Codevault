@@ -1,5 +1,6 @@
 import Snippet from "../models/snippet.model.js";
 import Collection from "../models/collection.model.js";
+import mongoose from "mongoose";
 
 function normalizeTags(tags) {
   if (!Array.isArray(tags)) {
@@ -16,7 +17,7 @@ async function findOwnedSnippet(snippetId, userId) {
 export async function getSnippets(req, res, next) {
   try {
     const snippets = await Snippet.find({ user: req.user._id })
-      .populate("collection", "name description")
+      .populate("snippetCollection", "name description")
       .sort({
         updatedAt: -1,
       });
@@ -29,10 +30,10 @@ export async function getSnippets(req, res, next) {
 
 export async function getSnippet(req, res, next) {
   try {
-    const snippet = await findOwnedSnippet(req.params.id, req.user._id).populate(
-      "collection",
-      "name description",
-    );
+    const snippet = await findOwnedSnippet(
+      req.params.id,
+      req.user._id,
+    ).populate("snippetCollection", "name description");
 
     if (!snippet) {
       res.status(404);
@@ -56,6 +57,10 @@ export async function createSnippet(req, res, next) {
     }
 
     if (collection) {
+      if (!mongoose.isValidObjectId(collection)) {
+        res.status(400);
+        throw new Error("Invalid collection id");
+      }
       const ownedCollection = await Collection.exists({
         _id: collection,
         user: req.user._id,
@@ -69,7 +74,7 @@ export async function createSnippet(req, res, next) {
 
     const snippet = await Snippet.create({
       user: req.user._id,
-      collection: collection || null,
+      snippetCollection: collection || null,
       title,
       description,
       language,
@@ -79,7 +84,7 @@ export async function createSnippet(req, res, next) {
     });
 
     const populatedSnippet = await snippet.populate(
-      "collection",
+      "snippetCollection",
       "name description",
     );
     res.status(201).json(populatedSnippet);
@@ -114,7 +119,7 @@ export async function updateSnippet(req, res, next) {
         }
       }
 
-      snippet.collection = collection || null;
+      snippet.snippetCollection = collection || null;
     }
     if (description !== undefined) snippet.description = description;
     if (language !== undefined) snippet.language = language;
@@ -123,7 +128,7 @@ export async function updateSnippet(req, res, next) {
     if (code !== undefined) snippet.code = code;
 
     const updatedSnippet = await snippet.save();
-    await updatedSnippet.populate("collection", "name description");
+    await updatedSnippet.populate("snippetCollection", "name description");
     res.json(updatedSnippet);
   } catch (error) {
     next(error);
@@ -157,7 +162,7 @@ export async function toggleFavorite(req, res, next) {
 
     snippet.favorite = !snippet.favorite;
     const updatedSnippet = await snippet.save();
-    await updatedSnippet.populate("collection", "name description");
+    await updatedSnippet.populate("snippetCollection", "name description");
 
     res.json(updatedSnippet);
   } catch (error) {

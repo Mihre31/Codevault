@@ -26,12 +26,28 @@ export async function signup(req, res) {
     }
 
     const user = await User.findOne({ email }).select("+password");
-    if (user) {
+    if (user?.password) {
       return res.status(400).json({ message: "Email already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
+
+    if (user?.googleId) {
+      user.fullName = user.fullName || displayName;
+      user.password = hashedPassword;
+      await user.save();
+
+      const token = generateToken(user._id, res);
+
+      return res.status(200).json({
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        profilePic: user.profilePic,
+        token,
+      });
+    }
 
     const newUser = new User({
       fullName: displayName,
@@ -86,6 +102,13 @@ export async function login(req, res) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    if (!user.password) {
+      return res.status(400).json({
+        message:
+          "This account does not have a password yet. Use forgot password to set one, or sign in with Google.",
+      });
+    }
+
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
       return res.status(400).json({ message: "Invalid credentials" });
@@ -123,12 +146,6 @@ export async function forgotPassword(req, res) {
     if (!user) {
       return res.status(200).json({
         message: "If that email exists, a reset link has been sent.",
-      });
-    }
-
-    if (!user.password) {
-      return res.status(400).json({
-        message: "Use Google sign in for this account.",
       });
     }
 
