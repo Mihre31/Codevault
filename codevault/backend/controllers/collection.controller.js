@@ -55,10 +55,12 @@ export async function updateCollection(req, res, next) {
 
     const { name, description } = req.body;
 
-    if (name !== undefined && !name.trim()) {
-      res.status(400);
-      if (name !== undefined) collection.name = name;
-      throw new Error("Collection name is required");
+    if (name !== undefined) {
+      if (!name.trim()) {
+        res.status(400);
+        throw new Error("Collection name is required");
+      }
+      collection.name = name;
     }
     if (description !== undefined) collection.description = description;
 
