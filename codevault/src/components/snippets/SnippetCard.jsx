@@ -1,6 +1,11 @@
 import { Star } from "lucide-react";
 
 export default function SnippetCard({ snippet, isSelected, onSelect }) {
+  const collectionName =
+    snippet.pendingCollectionName ||
+    snippet.collectionName ||
+    snippet.collection?.name;
+
   return (
     <button
       type="button"
@@ -31,6 +36,11 @@ export default function SnippetCard({ snippet, isSelected, onSelect }) {
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
+        {collectionName && (
+          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+            {collectionName}
+          </span>
+        )}
         <span className="rounded-full bg-slate-900 px-3 py-1 text-xs text-white">
           {snippet.language}
         </span>

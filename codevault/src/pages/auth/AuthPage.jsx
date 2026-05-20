@@ -1,30 +1,58 @@
 import { useState } from "react";
 import { Code2 } from "lucide-react";
-import { login, signup, startGoogleAuth } from "../../services/authApi";
+import {
+  login,
+  requestPasswordReset,
+  resetPassword,
+  signup,
+  startGoogleAuth,
+} from "../../services/authApi";
 import { useAuthStore } from "../../stores/authStore";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState("login");
+  const resetToken = new URL(window.location.href).searchParams.get("resetToken");
+  const [mode, setMode] = useState(resetToken ? "reset" : "login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const authenticate = useAuthStore((state) => state.login);
   const isSignup = mode === "signup";
+  const isForgotPassword = mode === "forgot";
+  const isResetPassword = mode === "reset";
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
     try {
       setError("");
+      setMessage("");
       setIsSubmitting(true);
+
+      if (isForgotPassword) {
+        const data = await requestPasswordReset(email);
+        setMessage(data.message);
+        return;
+      }
+
+      if (isResetPassword) {
+        const data = await resetPassword(resetToken, password);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("resetToken");
+        window.history.replaceState({}, "", url.pathname + url.search);
+        setPassword("");
+        setMode("login");
+        setMessage(data.message);
+        return;
+      }
 
       const data = isSignup
         ? await signup({ fullName, email, password })
         : await login({ email, password });
 
-      authenticate(data.token);
+      authenticate(data.token, data);
     } catch (authError) {
       setError(authError.message);
     } finally {
@@ -53,30 +81,47 @@ export default function AuthPage() {
             </div>
 
             <h1 className="text-5xl font-bold tracking-normal text-white sm:text-6xl">
-              {isSignup ? "Sign up" : "Login"}
+              {isSignup
+                ? "Sign up"
+                : isForgotPassword
+                  ? "Reset"
+                  : isResetPassword
+                    ? "New password"
+                    : "Login"}
             </h1>
             <p className="mt-5 text-base text-slate-300">
               {isSignup
                 ? "Create your vault and start organizing reusable code snippets."
+                : isForgotPassword
+                  ? "Enter your email and we will send a reset link."
+                  : isResetPassword
+                    ? "Choose a new password for your CodeVault account."
                 : "Welcome back. Open your vault and keep building."}
             </p>
 
-            <button
-              type="button"
-              onClick={startGoogleAuth}
-              className="mt-10 flex h-14 w-full items-center justify-center gap-4 rounded-2xl border border-slate-700 bg-slate-800 text-base font-semibold text-white transition hover:bg-slate-700"
-            >
-              <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-bold">
-                <span className="bg-gradient-to-r from-blue-500 via-green-500 to-red-500 bg-clip-text text-transparent">
-                  G
+            {!isForgotPassword && !isResetPassword && (
+              <button
+                type="button"
+                onClick={startGoogleAuth}
+                className="mt-10 flex h-14 w-full items-center justify-center gap-4 rounded-2xl border border-slate-700 bg-slate-800 text-base font-semibold text-white transition hover:bg-slate-700"
+              >
+                <span className="grid h-6 w-6 place-items-center rounded-full bg-white text-sm font-bold">
+                  <span className="bg-gradient-to-r from-blue-500 via-green-500 to-red-500 bg-clip-text text-transparent">
+                    G
+                  </span>
                 </span>
-              </span>
-              {isSignup ? "Sign up" : "Sign in"} with Google
-            </button>
+                {isSignup ? "Sign up" : "Sign in"} with Google
+              </button>
+            )}
 
             {error && (
               <div className="mt-6 rounded-2xl border border-red-900/50 bg-red-950/40 px-5 py-3 text-sm text-red-200">
                 {error}
+              </div>
+            )}
+            {message && (
+              <div className="mt-6 rounded-2xl border border-emerald-900/50 bg-emerald-950/40 px-5 py-3 text-sm text-emerald-200">
+                {message}
               </div>
             )}
 
@@ -96,31 +141,35 @@ export default function AuthPage() {
                 </label>
               )}
 
-              <label className="block">
-                <span className="text-base font-semibold text-slate-100">
-                  Email*
-                </span>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="mail@website.com"
-                  className="mt-4 h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-slate-500"
-                />
-              </label>
+              {!isResetPassword && (
+                <label className="block">
+                  <span className="text-base font-semibold text-slate-100">
+                    Email*
+                  </span>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="mail@website.com"
+                    className="mt-4 h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-slate-500"
+                  />
+                </label>
+              )}
 
-              <label className="block">
-                <span className="text-base font-semibold text-slate-100">
-                  Password*
-                </span>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Min. 6 character"
-                  className="mt-4 h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-slate-500"
-                />
-              </label>
+              {!isForgotPassword && (
+                <label className="block">
+                  <span className="text-base font-semibold text-slate-100">
+                    Password*
+                  </span>
+                  <input
+                    type="password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    placeholder="Min. 6 character"
+                    className="mt-4 h-14 w-full rounded-2xl border border-slate-700 bg-slate-950 px-5 text-base text-white outline-none transition placeholder:text-slate-500 focus:border-slate-500"
+                  />
+                </label>
+              )}
 
               <button
                 type="submit"
@@ -131,22 +180,60 @@ export default function AuthPage() {
                   ? "Please wait..."
                   : isSignup
                     ? "Create account"
-                    : "Login"}
+                    : isForgotPassword
+                      ? "Send reset link"
+                      : isResetPassword
+                        ? "Save new password"
+                        : "Login"}
               </button>
             </form>
 
-            <p className="mt-8 text-sm text-slate-400">
-              {isSignup ? "Already have an account?" : "Need an account?"}{" "}
+            {!isSignup && !isForgotPassword && !isResetPassword && (
               <button
                 type="button"
                 onClick={() => {
                   setError("");
-                  setMode(isSignup ? "login" : "signup");
+                  setMessage("");
+                  setMode("forgot");
                 }}
-                className="font-semibold text-white hover:text-slate-200"
+                className="mt-5 text-sm font-semibold text-white hover:text-slate-200"
               >
-                {isSignup ? "Login" : "Sign up"}
+                Forgot password?
               </button>
+            )}
+
+            <p className="mt-8 text-sm text-slate-400">
+              {isForgotPassword || isResetPassword ? (
+                <>
+                  Remembered your password?{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError("");
+                      setMessage("");
+                      setMode("login");
+                    }}
+                    className="font-semibold text-white hover:text-slate-200"
+                  >
+                    Login
+                  </button>
+                </>
+              ) : (
+                <>
+                  {isSignup ? "Already have an account?" : "Need an account?"}{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setError("");
+                      setMessage("");
+                      setMode(isSignup ? "login" : "signup");
+                    }}
+                    className="font-semibold text-white hover:text-slate-200"
+                  >
+                    {isSignup ? "Login" : "Sign up"}
+                  </button>
+                </>
+              )}
             </p>
           </div>
 

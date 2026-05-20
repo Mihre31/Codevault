@@ -34,6 +34,20 @@ export function signup(userData) {
   });
 }
 
+export function requestPasswordReset(email) {
+  return request("/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+}
+
+export function resetPassword(token, password) {
+  return request(`/auth/reset-password/${token}`, {
+    method: "POST",
+    body: JSON.stringify({ password }),
+  });
+}
+
 export function logout() {
   return request("/auth/logout", {
     method: "POST",

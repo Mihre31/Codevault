@@ -13,6 +13,12 @@ const snippetSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    snippetCollection: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Collection",
+      default: null,
+      index: true,
+    },
     description: {
       type: String,
       default: "",
@@ -36,7 +42,18 @@ const snippetSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true },
+  {
+    timestamps: true,
+    toJSON: {
+      virtuals: true,
+      transform(doc, ret) {
+        ret.collection = ret.snippetCollection;
+        delete ret.snippetCollection;
+        return ret;
+      },
+    },
+    toObject: { virtuals: true },
+  },
 );
 
 const Snippet = mongoose.model("Snippet", snippetSchema);

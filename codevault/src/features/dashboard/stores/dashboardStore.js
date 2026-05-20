@@ -1,5 +1,9 @@
 import { create } from "zustand";
 import { languages as defaultLanguages } from "../../../data/snippets";
+import {
+  createCollection,
+  getCollections,
+} from "../../../services/collectionApi";
 import { logout as logoutRequest } from "../../../services/authApi";
 import {
   createSnippet,
@@ -9,7 +13,11 @@ import {
   updateSnippet,
 } from "../../../services/snippetApi";
 import { useAuthStore } from "../../../stores/authStore";
-import { createDraftSnippet, getSnippetId } from "../utils/snippetUtils";
+import {
+  createDraftSnippet,
+  getCollectionId,
+  getSnippetId,
+} from "../utils/snippetUtils";
 
 function getLanguages(snippets, extraLanguages = []) {
   return [
@@ -28,6 +36,7 @@ function getFilteredSnippets({ language, query, snippets }) {
       searchValue === "" ||
       snippet.title.toLowerCase().includes(searchValue) ||
       snippet.description.toLowerCase().includes(searchValue) ||
+      getSnippetCollectionName(snippet)?.toLowerCase().includes(searchValue) ||
       snippet.tags.some((tag) => tag.toLowerCase().includes(searchValue));
 
     const matchesLanguage = language === "All" || snippet.language === language;
@@ -36,10 +45,34 @@ function getFilteredSnippets({ language, query, snippets }) {
   });
 }
 
+function normalizeTagsInput(tagsInput) {
+  return tagsInput
+    .split(",")
+    .map((tag) => tag.trim().replace(/^#/, ""))
+    .filter(Boolean);
+}
+
+function getSnippetCollectionId(snippet) {
+  return getCollectionId(snippet.collection);
+}
+
+function getSnippetCollectionName(snippet) {
+  if (snippet.pendingCollectionName) return snippet.pendingCollectionName;
+  if (snippet.collectionName) return snippet.collectionName;
+  if (typeof snippet.collection === "object") return snippet.collection?.name;
+  return "";
+}
+
 export const useDashboardStore = create((set, get) => ({
+  collection: "All",
+  collections: [],
   copied: false,
+  draftCollection: "",
+  draftCollectionDescription: "",
+  draftCollectionName: "",
   customDraftLanguage: "",
   draftLanguage: "JavaScript",
+  draftTags: "",
   draftTitle: "",
   error: "",
   isCreateOpen: false,
@@ -49,6 +82,7 @@ export const useDashboardStore = create((set, get) => ({
   query: "",
   selectedSnippet: null,
   snippets: [],
+  tag: "All",
   theme: "dark",
 
   closeCreateSnippet: () => set({ isCreateOpen: false }),
@@ -71,19 +105,40 @@ export const useDashboardStore = create((set, get) => ({
   createDraftFromForm: (event) => {
     event.preventDefault();
 
-    const { customDraftLanguage, draftLanguage, draftTitle } = get();
+    const {
+      customDraftLanguage,
+      draftCollection,
+      draftCollectionDescription,
+      draftCollectionName,
+      draftLanguage,
+      draftTags,
+      draftTitle,
+    } = get();
     const trimmedTitle = draftTitle.trim();
     const selectedDraftLanguage =
       draftLanguage === "Other" ? customDraftLanguage.trim() : draftLanguage;
+    const pendingCollectionName = draftCollectionName.trim();
 
     if (!trimmedTitle || !selectedDraftLanguage) return;
+    if (draftCollection === "new" && !pendingCollectionName) return;
 
     set({
       error: "",
       isCreateOpen: false,
       language: selectedDraftLanguage,
       selectedSnippet: createDraftSnippet({
+        collection: draftCollection && draftCollection !== "new"
+          ? draftCollection
+          : null,
+        collectionName:
+          draftCollection && draftCollection !== "new"
+            ? get().getCollectionName(draftCollection) || ""
+            : "",
         language: selectedDraftLanguage,
+        pendingCollectionDescription: draftCollectionDescription.trim(),
+        pendingCollectionName:
+          draftCollection === "new" ? pendingCollectionName : "",
+        tags: normalizeTagsInput(draftTags),
         title: trimmedTitle,
       }),
     });
@@ -149,7 +204,37 @@ export const useDashboardStore = create((set, get) => ({
       set({ error: apiError.message });
     }
   },
-  getFilteredSnippets: () => getFilteredSnippets(get()),
+  getFilteredSnippets: () => {
+    const { collection, language, query, snippets, tag } = get();
+    const languageFiltered = getFilteredSnippets({ language, query, snippets });
+
+    return languageFiltered.filter((snippet) => {
+      const matchesCollection =
+        collection === "All" ||
+        (collection === "__none" && !getSnippetCollectionId(snippet)) ||
+        getSnippetCollectionId(snippet) === collection;
+      const matchesTag = tag === "All" || snippet.tags.includes(tag);
+
+      return matchesCollection && matchesTag;
+    });
+  },
+  getCollectionName: (collectionId) => {
+    const { collections } = get();
+    return collections.find((item) => getCollectionId(item) === collectionId)
+      ?.name;
+  },
+  getCollectionsForFilters: () => {
+    const { collections, snippets } = get();
+    const hasUnassigned = snippets.some(
+      (snippet) => !getSnippetCollectionId(snippet),
+    );
+
+    return [
+      { _id: "All", name: "All" },
+      ...(hasUnassigned ? [{ _id: "__none", name: "Unassigned" }] : []),
+      ...collections,
+    ];
+  },
   getLanguages: () => {
     const { language, selectedSnippet, snippets } = get();
     return getLanguages(snippets, [
@@ -163,6 +248,10 @@ export const useDashboardStore = create((set, get) => ({
     ),
   getTotalFavorites: () =>
     get().snippets.filter((snippet) => snippet.favorite).length,
+  getTags: () => [
+    "All",
+    ...new Set(get().snippets.flatMap((snippet) => snippet.tags || [])),
+  ],
   getTotalLanguages: () =>
     new Set(
       get()
@@ -172,14 +261,19 @@ export const useDashboardStore = create((set, get) => ({
   loadSnippets: async () => {
     try {
       set({ error: "", isLoading: true });
-      const data = await getSnippets();
+      const [snippets, collections] = await Promise.all([
+        getSnippets(),
+        getCollections(),
+      ]);
       set({
+        collections,
         isLoading: false,
-        selectedSnippet: data[0] || null,
-        snippets: data,
+        selectedSnippet: snippets[0] || null,
+        snippets,
       });
     } catch (apiError) {
       set({
+        collections: [],
         error: apiError.message,
         isLoading: false,
         selectedSnippet: null,
@@ -197,25 +291,43 @@ export const useDashboardStore = create((set, get) => ({
     }
   },
   openCreateSnippet: () => {
-    const { language } = get();
+    const { collection, language } = get();
 
     set({
       customDraftLanguage: "",
+      draftCollection: collection === "All" ? "" : collection,
+      draftCollectionDescription: "",
+      draftCollectionName: "",
       draftLanguage: language === "All" ? "JavaScript" : language,
+      draftTags: "",
       draftTitle: "",
       isCreateOpen: true,
     });
   },
   saveSelectedSnippetCode: async (code) => {
-    const { selectedSnippet, snippets } = get();
+    const { collections, selectedSnippet, snippets } = get();
     if (!selectedSnippet) return;
 
     try {
       set({ error: "" });
 
       if (selectedSnippet.isDraft) {
+        let collection = getSnippetCollectionId(selectedSnippet);
+        let nextCollections = collections;
+
+        if (selectedSnippet.pendingCollectionName) {
+          const createdCollection = await createCollection({
+            name: selectedSnippet.pendingCollectionName,
+            description: selectedSnippet.pendingCollectionDescription,
+          });
+
+          collection = getCollectionId(createdCollection);
+          nextCollections = [...collections, createdCollection];
+        }
+
         const createdSnippet = await createSnippet({
           title: selectedSnippet.title,
+          collection,
           description: selectedSnippet.description,
           language: selectedSnippet.language,
           tags: selectedSnippet.tags,
@@ -224,6 +336,8 @@ export const useDashboardStore = create((set, get) => ({
         });
 
         set({
+          collection: collection || "All",
+          collections: nextCollections,
           selectedSnippet: createdSnippet,
           snippets: [createdSnippet, ...snippets],
         });
@@ -282,11 +396,18 @@ export const useDashboardStore = create((set, get) => ({
     }
   },
   setCustomDraftLanguage: (customDraftLanguage) => set({ customDraftLanguage }),
+  setCollection: (collection) => set({ collection }),
+  setDraftCollection: (draftCollection) => set({ draftCollection }),
+  setDraftCollectionDescription: (draftCollectionDescription) =>
+    set({ draftCollectionDescription }),
+  setDraftCollectionName: (draftCollectionName) => set({ draftCollectionName }),
   setDraftLanguage: (draftLanguage) => set({ draftLanguage }),
+  setDraftTags: (draftTags) => set({ draftTags }),
   setDraftTitle: (draftTitle) => set({ draftTitle }),
   setLanguage: (language) => set({ language }),
   setQuery: (query) => set({ query }),
   setSelectedSnippet: (selectedSnippet) => set({ selectedSnippet }),
+  setTag: (tag) => set({ tag }),
   toggleFilters: () =>
     set((state) => ({ isFilterOpen: !state.isFilterOpen })),
   toggleSelectedSnippetFavorite: async () => {

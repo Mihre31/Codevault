@@ -1,4 +1,6 @@
 import Snippet from "../models/snippet.model.js";
+import Collection from "../models/collection.model.js";
+import mongoose from "mongoose";
 
 function normalizeTags(tags) {
   if (!Array.isArray(tags)) {
@@ -14,9 +16,11 @@ async function findOwnedSnippet(snippetId, userId) {
 
 export async function getSnippets(req, res, next) {
   try {
-    const snippets = await Snippet.find({ user: req.user._id }).sort({
-      updatedAt: -1,
-    });
+    const snippets = await Snippet.find({ user: req.user._id })
+      .populate("snippetCollection", "name description")
+      .sort({
+        updatedAt: -1,
+      });
 
     res.json(snippets);
   } catch (error) {
@@ -26,7 +30,10 @@ export async function getSnippets(req, res, next) {
 
 export async function getSnippet(req, res, next) {
   try {
-    const snippet = await findOwnedSnippet(req.params.id, req.user._id);
+    const snippet = await findOwnedSnippet(
+      req.params.id,
+      req.user._id,
+    ).populate("snippetCollection", "name description");
 
     if (!snippet) {
       res.status(404);
@@ -41,15 +48,33 @@ export async function getSnippet(req, res, next) {
 
 export async function createSnippet(req, res, next) {
   try {
-    const { title, description, language, tags, favorite, code } = req.body;
+    const { title, collection, description, language, tags, favorite, code } =
+      req.body;
 
     if (!title || !language || !code) {
       res.status(400);
       throw new Error("Title, language, and code are required");
     }
 
+    if (collection) {
+      if (!mongoose.isValidObjectId(collection)) {
+        res.status(400);
+        throw new Error("Invalid collection id");
+      }
+      const ownedCollection = await Collection.exists({
+        _id: collection,
+        user: req.user._id,
+      });
+
+      if (!ownedCollection) {
+        res.status(400);
+        throw new Error("Collection not found");
+      }
+    }
+
     const snippet = await Snippet.create({
       user: req.user._id,
+      snippetCollection: collection || null,
       title,
       description,
       language,
@@ -58,7 +83,11 @@ export async function createSnippet(req, res, next) {
       code,
     });
 
-    res.status(201).json(snippet);
+    const populatedSnippet = await snippet.populate(
+      "snippetCollection",
+      "name description",
+    );
+    res.status(201).json(populatedSnippet);
   } catch (error) {
     next(error);
   }
@@ -73,9 +102,25 @@ export async function updateSnippet(req, res, next) {
       throw new Error("Snippet not found");
     }
 
-    const { title, description, language, tags, favorite, code } = req.body;
+    const { title, collection, description, language, tags, favorite, code } =
+      req.body;
 
     if (title !== undefined) snippet.title = title;
+    if (collection !== undefined) {
+      if (collection) {
+        const ownedCollection = await Collection.exists({
+          _id: collection,
+          user: req.user._id,
+        });
+
+        if (!ownedCollection) {
+          res.status(400);
+          throw new Error("Collection not found");
+        }
+      }
+
+      snippet.snippetCollection = collection || null;
+    }
     if (description !== undefined) snippet.description = description;
     if (language !== undefined) snippet.language = language;
     if (tags !== undefined) snippet.tags = normalizeTags(tags);
@@ -83,6 +128,7 @@ export async function updateSnippet(req, res, next) {
     if (code !== undefined) snippet.code = code;
 
     const updatedSnippet = await snippet.save();
+    await updatedSnippet.populate("snippetCollection", "name description");
     res.json(updatedSnippet);
   } catch (error) {
     next(error);
@@ -116,6 +162,7 @@ export async function toggleFavorite(req, res, next) {
 
     snippet.favorite = !snippet.favorite;
     const updatedSnippet = await snippet.save();
+    await updatedSnippet.populate("snippetCollection", "name description");
 
     res.json(updatedSnippet);
   } catch (error) {

@@ -1,17 +1,19 @@
-import { useShallow } from "zustand/react/shallow";
+import { useMemo } from "react";
 import SnippetList from "../../../components/snippets/SnippetList";
 import SnippetPreview from "../../../components/snippets/SnippetPreview";
 import { snippets as demoSnippets } from "../../../data/snippets";
 import { useDashboardStore } from "../stores/dashboardStore";
-import { getSnippetId } from "../utils/snippetUtils";
+import { getCollectionId, getSnippetId } from "../utils/snippetUtils";
 
 export default function SnippetWorkspace() {
   const copied = useDashboardStore((state) => state.copied);
-  const filteredSnippets = useDashboardStore(
-    useShallow((state) => state.getFilteredSnippets()),
-  );
+  const collection = useDashboardStore((state) => state.collection);
   const isLoading = useDashboardStore((state) => state.isLoading);
+  const language = useDashboardStore((state) => state.language);
+  const query = useDashboardStore((state) => state.query);
   const selectedSnippet = useDashboardStore((state) => state.selectedSnippet);
+  const snippets = useDashboardStore((state) => state.snippets);
+  const tag = useDashboardStore((state) => state.tag);
   const copyCode = useDashboardStore((state) => state.copyCode);
   const deleteSelectedSnippet = useDashboardStore(
     (state) => state.deleteSelectedSnippet,
@@ -31,6 +33,37 @@ export default function SnippetWorkspace() {
   const toggleSelectedSnippetFavorite = useDashboardStore(
     (state) => state.toggleSelectedSnippetFavorite,
   );
+  const filteredSnippets = useMemo(() => {
+    const searchValue = query.toLowerCase().trim();
+
+    return snippets.filter((snippet) => {
+      const collectionName =
+        snippet.pendingCollectionName ||
+        snippet.collectionName ||
+        snippet.collection?.name ||
+        "";
+      const matchesSearch =
+        searchValue === "" ||
+        snippet.title.toLowerCase().includes(searchValue) ||
+        snippet.description.toLowerCase().includes(searchValue) ||
+        collectionName.toLowerCase().includes(searchValue) ||
+        snippet.tags.some((currentTag) =>
+          currentTag.toLowerCase().includes(searchValue),
+        );
+      const snippetCollectionId = getCollectionId(snippet.collection);
+      const matchesCollection =
+        collection === "All" ||
+        (collection === "__none" && !snippetCollectionId) ||
+        snippetCollectionId === collection;
+      const matchesLanguage =
+        language === "All" || snippet.language === language;
+      const matchesTag = tag === "All" || snippet.tags.includes(tag);
+
+      return (
+        matchesSearch && matchesCollection && matchesLanguage && matchesTag
+      );
+    });
+  }, [collection, language, query, snippets, tag]);
 
   return (
     <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(280px,380px)_minmax(0,1fr)] xl:gap-6">
