@@ -1,4 +1,18 @@
-import { Star } from "lucide-react";
+import { Code2, Star } from "lucide-react";
+
+const languageStyles = {
+  css: "bg-sky-500 text-white",
+  html: "bg-orange-500 text-white",
+  javascript: "bg-yellow-400 text-slate-950",
+  json: "bg-emerald-500 text-white",
+  python: "bg-blue-500 text-white",
+  react: "bg-violet-500 text-white",
+  typescript: "bg-blue-500 text-white",
+};
+
+function getLanguageStyle(language) {
+  return languageStyles[String(language).toLowerCase()] || "bg-slate-700 text-white";
+}
 
 export default function SnippetCard({ snippet, isSelected, onSelect }) {
   const collectionName =
@@ -10,48 +24,39 @@ export default function SnippetCard({ snippet, isSelected, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(snippet)}
-      className={`w-full rounded-2xl border p-4 text-left shadow-sm transition sm:p-5 ${
+      className={`w-full rounded-lg border p-3 text-left transition ${
         isSelected
-          ? "border-slate-900 bg-white dark:border-slate-200 dark:bg-slate-900"
-          : "border-transparent bg-white hover:border-slate-300 dark:bg-slate-900 dark:hover:border-slate-700"
+          ? "border-violet-400 bg-violet-500/10 dark:bg-violet-500/10"
+          : "border-transparent hover:border-slate-200 hover:bg-slate-100/70 dark:hover:border-slate-800 dark:hover:bg-slate-950/50"
       }`}
     >
-      <div className="mb-2 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="font-semibold text-slate-950 dark:text-white">
+      <div className="flex items-center gap-3">
+        <div
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${getLanguageStyle(
+            snippet.language,
+          )}`}
+        >
+          {snippet.language?.slice(0, 2).toUpperCase() || <Code2 size={18} />}
+        </div>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-semibold text-slate-950 dark:text-white">
             {snippet.title}
-          </h2>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            {snippet.description}
-          </p>
+          </h3>
+          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              {snippet.language}
+            </span>
+            {collectionName && <span className="truncate">{collectionName}</span>}
+          </div>
         </div>
         <Star
           size={18}
           className={
             snippet.favorite
               ? "shrink-0 fill-yellow-400 text-yellow-400"
-              : "shrink-0 text-slate-300"
+              : "shrink-0 text-slate-300 dark:text-slate-600"
           }
         />
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2">
-        {collectionName && (
-          <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
-            {collectionName}
-          </span>
-        )}
-        <span className="rounded-full bg-slate-900 px-3 py-1 text-xs text-white">
-          {snippet.language}
-        </span>
-        {snippet.tags.map((tag) => (
-          <span
-            key={tag}
-            className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-          >
-            {tag}
-          </span>
-        ))}
       </div>
     </button>
   );

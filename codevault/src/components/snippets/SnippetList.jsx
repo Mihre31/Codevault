@@ -7,7 +7,7 @@ export default function SnippetList({
 }) {
   if (snippets.length === 0) {
     return (
-      <div className="rounded-2xl bg-white p-6 text-center shadow-sm dark:border dark:border-slate-800 dark:bg-slate-900">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-center dark:border-slate-800 dark:bg-slate-950/60">
         <h2 className="font-semibold text-slate-950 dark:text-white">
           No snippets found
         </h2>
@@ -19,7 +19,7 @@ export default function SnippetList({
   }
 
   return (
-    <>
+    <div className="grid gap-2">
       {snippets.map((snippet) => (
         <SnippetCard
           key={snippet._id || snippet.id}
@@ -31,6 +31,6 @@ export default function SnippetList({
           onSelect={onSelectSnippet}
         />
       ))}
-    </>
+    </div>
   );
 }

@@ -10,7 +10,7 @@ export default function SnippetActions({
   onToggleFavorite,
 }) {
   return (
-    <div className="flex shrink-0 flex-wrap gap-2">
+    <div className="flex shrink-0 flex-wrap gap-2 xl:flex-nowrap">
       <IconButton
         onClick={onCopy}
         icon={<Copy size={17} />}

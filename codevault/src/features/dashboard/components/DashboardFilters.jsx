@@ -48,9 +48,9 @@ export default function DashboardFilters() {
   if (!isFilterOpen) return null;
 
   return (
-    <section className="mb-6 rounded-2xl bg-white p-3 shadow-sm transition-colors dark:border dark:border-slate-800 dark:bg-slate-900 sm:p-4">
+    <section className="mb-6 rounded-2xl border border-slate-200 bg-white/85 p-4 shadow-sm transition-colors dark:border-slate-800 dark:bg-[#0c1328]/90 sm:p-5">
       <div className="mb-3">
-        <h2 className="text-sm font-semibold text-slate-950 dark:text-white">
+        <h2 className="text-base font-bold text-slate-950 dark:text-white">
           Filter snippets
         </h2>
         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
@@ -82,13 +82,13 @@ export default function DashboardFilters() {
                   <button
                     key={collectionId || currentCollection.name}
                     type="button"
-                    onClick={() => setCollection(collectionId || "All")}
-                    className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                      collection === collectionId
-                        ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                    }`}
-                  >
+                  onClick={() => setCollection(collectionId || "All")}
+                  className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
+                    collection === collectionId
+                      ? "bg-violet-500 text-white"
+                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                  }`}
+                >
                     {currentCollection.name}
                   </button>
                 );
@@ -107,7 +107,7 @@ export default function DashboardFilters() {
                   onClick={() => setTag(currentTag)}
                   className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
                     tag === currentTag
-                      ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950"
+                      ? "bg-violet-500 text-white"
                       : "bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                   }`}
                 >

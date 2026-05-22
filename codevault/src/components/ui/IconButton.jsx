@@ -10,14 +10,14 @@ export default function IconButton({
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
+      className={`flex h-9 items-center gap-2 whitespace-nowrap rounded-lg px-3 text-xs font-semibold transition ${
         dark
-          ? "bg-slate-900 text-white hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+          ? "border border-slate-200 bg-white text-slate-800 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
           : danger
-            ? "bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950"
+            ? "border border-red-500/20 bg-red-500/10 text-red-600 hover:bg-red-500/15 dark:text-red-300"
             : active
-              ? "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 dark:bg-yellow-400/15 dark:text-yellow-300 dark:hover:bg-yellow-400/25"
-            : "bg-slate-100 text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              ? "border border-yellow-400/30 bg-yellow-400/15 text-yellow-600 hover:bg-yellow-400/20 dark:text-yellow-300"
+            : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
       }`}
     >
       {icon}

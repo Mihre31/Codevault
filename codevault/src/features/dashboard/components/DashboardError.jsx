@@ -5,10 +5,20 @@ export default function DashboardError() {
 
   if (!message) return null;
 
+  const shouldShowAuthHint =
+    message.toLowerCase().includes("token") ||
+    message.toLowerCase().includes("unauthorized") ||
+    message.toLowerCase().includes("login");
+
   return (
     <section className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 shadow-sm dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-      {message}. Login first, then save your token as{" "}
-      <code>localStorage.codevault_token</code>, or use the auth cookie.
+      {message}
+      {shouldShowAuthHint && (
+        <>
+          . Login first, then save your token as{" "}
+          <code>localStorage.codevault_token</code>, or use the auth cookie.
+        </>
+      )}
     </section>
   );
 }

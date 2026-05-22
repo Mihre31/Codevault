@@ -62,7 +62,7 @@ const codeVaultEditorTheme = EditorView.theme({
 });
 
 function getLanguageExtension(language) {
-  const normalizedLanguage = language.toLowerCase();
+  const normalizedLanguage = String(language || "javascript").toLowerCase();
 
   if (normalizedLanguage.includes("python")) return python();
   if (normalizedLanguage.includes("html")) return html();
@@ -90,31 +90,33 @@ export default function SnippetPreview({
   snippet,
 }) {
   const [codeDraft, setCodeDraft] = useState(snippet.code || "");
+  const snippetTags = Array.isArray(snippet.tags) ? snippet.tags : [];
+  const languageLabel = snippet.language || "Plain Text";
   const collectionName =
     snippet.pendingCollectionName ||
     snippet.collectionName ||
     snippet.collection?.name;
 
   return (
-    <article className="min-w-0 rounded-2xl bg-white p-4 shadow-sm transition-colors dark:border dark:border-slate-800 dark:bg-slate-900 sm:p-6">
-      <div className="mb-5 flex min-w-0 flex-col gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 md:flex-row md:items-start md:justify-between">
+    <article className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white/85 shadow-sm transition-colors dark:border-slate-800 dark:bg-[#0c1328]/90">
+      <div className="grid min-w-0 gap-3 border-b border-slate-200 px-4 py-3 dark:border-slate-800 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
         <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-2 flex flex-wrap gap-2">
             {collectionName && (
-              <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
+              <span className="rounded-full bg-violet-500/10 px-3 py-1 text-xs font-semibold text-violet-600 dark:text-violet-300">
                 {collectionName}
               </span>
             )}
-            <span className="rounded-full bg-slate-900 px-3 py-1 text-xs text-white">
-              {snippet.language}
+            <span className="rounded-full bg-amber-400/15 px-3 py-1 text-xs font-semibold text-amber-600 dark:text-amber-300">
+              {languageLabel}
             </span>
             {snippet.favorite && (
-              <span className="rounded-full bg-yellow-100 px-3 py-1 text-xs font-medium text-yellow-700">
+              <span className="rounded-full bg-rose-500/10 px-3 py-1 text-xs font-semibold text-rose-500 dark:text-rose-300">
                 Favorite
               </span>
             )}
           </div>
-          <h2 className="break-words text-xl font-bold text-slate-950 dark:text-white sm:text-2xl">
+          <h2 className="truncate text-base font-bold text-slate-950 dark:text-white">
             {snippet.title}
           </h2>
           <p
@@ -125,39 +127,43 @@ export default function SnippetPreview({
             onBlur={(event) =>
               onDescriptionSave(event.currentTarget.textContent.trim())
             }
-            className="mt-2 text-slate-500 outline-none dark:text-slate-400"
+            className="mt-1 line-clamp-2 max-w-[520px] text-sm text-slate-500 outline-none dark:text-slate-400"
           >
             {snippet.description}
           </p>
         </div>
 
-        <SnippetActions
-          copied={copied}
-          isFavorite={snippet.favorite}
-          onCopy={onCopy}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onToggleFavorite={onToggleFavorite}
-        />
+        <div className="min-w-fit">
+          <SnippetActions
+            copied={copied}
+            isFavorite={snippet.favorite}
+            onCopy={onCopy}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onToggleFavorite={onToggleFavorite}
+          />
+        </div>
       </div>
 
-      <div className="mb-5 flex flex-wrap gap-2">
-        {snippet.tags.map((tag) => (
-          <span
-            key={tag}
-            className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-          >
-            #{tag}
-          </span>
-        ))}
-      </div>
+      {snippetTags.length > 0 && (
+        <div className="flex flex-wrap gap-2 px-4 py-3">
+          {snippetTags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+            >
+              #{tag}
+            </span>
+          ))}
+        </div>
+      )}
 
-      <div>
+      <div className="px-4 pb-4">
         <CodeMirror
           value={codeDraft}
-          height="360px"
+          height="300px"
           theme={oneDark}
-          extensions={[codeVaultEditorTheme, getLanguageExtension(snippet.language)]}
+          extensions={[codeVaultEditorTheme, getLanguageExtension(languageLabel)]}
           onChange={(value) => setCodeDraft(value)}
           basicSetup={{
             autocompletion: true,
@@ -166,14 +172,14 @@ export default function SnippetPreview({
             highlightActiveLine: true,
             lineNumbers: true,
           }}
-          className="overflow-hidden rounded-2xl bg-slate-950 text-sm ring-1 ring-slate-800 transition focus-within:ring-slate-500"
+          className="overflow-hidden rounded-lg bg-slate-950 text-sm ring-1 ring-slate-800 transition focus-within:ring-violet-500/70"
           placeholder="// Start writing your snippet here"
         />
         <div className="mt-4 flex justify-end">
           <button
             type="button"
             onClick={() => onCodeSave(codeDraft)}
-            className="rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+            className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:scale-[1.01]"
           >
             {isDraft ? "Save Snippet" : "Save Code"}
           </button>
