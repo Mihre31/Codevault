@@ -1,76 +1,152 @@
-import { Code2, Filter, LogOut, Moon, Plus, Sun } from "lucide-react";
+import {
+  Archive,
+  Folder,
+  Heart,
+  LayoutDashboard,
+  LogOut,
+  Plus,
+  Trash2,
+  Zap,
+} from "lucide-react";
 import { useDashboardStore } from "../../features/dashboard/stores/dashboardStore";
+import { getCollectionId } from "../../features/dashboard/utils/snippetUtils";
 
 export default function DashboardHeader() {
+  const collection = useDashboardStore((state) => state.collection);
+  const collections = useDashboardStore((state) => state.collections);
   const logout = useDashboardStore((state) => state.logout);
   const openCreateSnippet = useDashboardStore(
     (state) => state.openCreateSnippet,
   );
-  const isFilterOpen = useDashboardStore((state) => state.isFilterOpen);
-  const language = useDashboardStore((state) => state.language);
-  const query = useDashboardStore((state) => state.query);
-  const theme = useDashboardStore((state) => state.theme);
-  const toggleFilters = useDashboardStore((state) => state.toggleFilters);
-  const toggleTheme = useDashboardStore((state) => state.toggleTheme);
-  const isDark = theme === "dark";
-  const hasActiveFilter = query.trim() !== "" || language !== "All";
+  const setCollection = useDashboardStore((state) => state.setCollection);
+  const snippets = useDashboardStore((state) => state.snippets);
+  const setTag = useDashboardStore((state) => state.setTag);
+
+  const navItems = [
+    {
+      icon: <LayoutDashboard size={19} />,
+      label: "Dashboard",
+      active: collection === "All",
+      onClick: () => {
+        setCollection("All");
+        setTag("All");
+      },
+    },
+    {
+      icon: <Archive size={19} />,
+      label: "All Snippets",
+      active: collection === "All",
+      onClick: () => setCollection("All"),
+    },
+    {
+      icon: <Heart size={19} />,
+      label: "Favorites",
+      active: false,
+      onClick: () => setTag("All"),
+    },
+    {
+      icon: <Folder size={19} />,
+      label: "Collections",
+      active: false,
+      onClick: () => setCollection("All"),
+    },
+    {
+      icon: <Trash2 size={19} />,
+      label: "Trash",
+      active: false,
+      onClick: () => {},
+    },
+  ];
 
   return (
-    <header className="mb-6 flex flex-col gap-4 rounded-2xl bg-white p-4 shadow-sm transition-colors dark:border dark:border-slate-800 dark:bg-slate-900 sm:p-6 lg:mb-8 lg:flex-row lg:items-center lg:justify-between">
-      <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950 sm:h-12 sm:w-12">
-          <Code2 size={24} />
+    <aside className="min-h-0 overflow-hidden border-b border-slate-200/70 bg-white/85 p-4 backdrop-blur-xl dark:border-slate-800/80 dark:bg-[#0b1024]/92 lg:flex lg:h-full lg:flex-col lg:border-b-0 lg:border-r lg:px-5 lg:py-5">
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-violet-500 text-white shadow-lg shadow-violet-500/20">
+          <Zap size={20} fill="currentColor" />
         </div>
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold text-slate-950 dark:text-white">
+        <div>
+          <h2 className="text-xl font-bold text-slate-950 dark:text-white">
             CodeVault
-          </h1>
-          <p className="text-sm text-slate-500 dark:text-slate-400 sm:max-w-none">
-            Save, organize, and reuse your code snippets.
-          </p>
+          </h2>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:flex sm:flex-row lg:shrink-0">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-          className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
-        >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
-          {isDark ? "Light" : "Dark"}
-        </button>
-        <button
-          type="button"
-          onClick={toggleFilters}
-          aria-expanded={isFilterOpen}
-          className={`flex h-12 items-center justify-center gap-2 rounded-2xl border px-4 text-sm font-semibold transition ${
-            isFilterOpen || hasActiveFilter
-              ? "border-slate-900 bg-slate-900 text-white dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950"
-              : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
-          }`}
-        >
-          <Filter size={18} />
-          Filter
-        </button>
+      <div className="mt-7 grid gap-3">
         <button
           type="button"
           onClick={openCreateSnippet}
-          className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-slate-900 px-5 text-sm font-semibold text-white transition hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200"
+          className="flex h-10 items-center justify-center gap-3 rounded-lg bg-gradient-to-r from-indigo-500 to-violet-500 px-5 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:scale-[1.01]"
         >
-          <Plus size={18} />
+          <Plus size={16} />
           New Snippet
         </button>
-        <button
-          type="button"
-          onClick={logout}
-          className="col-span-2 flex h-12 items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 text-sm font-semibold text-red-600 transition hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950 sm:col-span-1"
-        >
-          <LogOut size={18} />
-          Logout
-        </button>
       </div>
-    </header>
+
+      <nav className="mt-4 grid gap-2">
+        {navItems.map((item) => (
+          <button
+            key={item.label}
+            type="button"
+            onClick={item.onClick}
+            className={`flex h-10 items-center gap-3 rounded-lg px-3 text-sm font-semibold transition ${
+              item.active
+                ? "bg-violet-500/15 text-violet-600 dark:bg-violet-500/20 dark:text-violet-300"
+                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-900 dark:hover:text-white"
+            }`}
+          >
+            {item.icon}
+            {item.label}
+          </button>
+        ))}
+      </nav>
+
+      <div className="mt-5 border-t border-slate-200 pt-4 dark:border-slate-800/80">
+        <div className="mb-3 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            Collections
+          </p>
+          <Plus size={17} className="text-slate-400" />
+        </div>
+        <div className="grid max-h-40 gap-1 overflow-y-auto pr-1">
+          {collections.length === 0 ? (
+            <p className="rounded-2xl bg-slate-100 p-3 text-sm text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+              No collections yet
+            </p>
+          ) : (
+            collections.map((currentCollection) => {
+              const collectionId = getCollectionId(currentCollection);
+              const count = snippets.filter(
+                (snippet) => getCollectionId(snippet.collection) === collectionId,
+              ).length;
+
+              return (
+                <button
+                  key={collectionId || currentCollection.name}
+                  type="button"
+                  onClick={() => setCollection(collectionId || "All")}
+                  className={`flex items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${
+                    collection === collectionId
+                      ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"
+                      : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-900"
+                  }`}
+                >
+                  <span className="min-w-0 truncate">{currentCollection.name}</span>
+                  <span className="text-xs opacity-70">{count}</span>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={logout}
+        className="mt-auto flex h-10 items-center justify-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 text-sm font-semibold text-red-500 transition hover:bg-red-500/15 dark:text-red-300"
+      >
+        <LogOut size={17} />
+        Logout
+      </button>
+    </aside>
   );
 }

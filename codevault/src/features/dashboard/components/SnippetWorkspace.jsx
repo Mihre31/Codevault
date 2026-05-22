@@ -37,6 +37,9 @@ export default function SnippetWorkspace() {
     const searchValue = query.toLowerCase().trim();
 
     return snippets.filter((snippet) => {
+      const snippetTitle = String(snippet.title || "");
+      const snippetDescription = String(snippet.description || "");
+      const snippetTags = Array.isArray(snippet.tags) ? snippet.tags : [];
       const collectionName =
         snippet.pendingCollectionName ||
         snippet.collectionName ||
@@ -44,11 +47,11 @@ export default function SnippetWorkspace() {
         "";
       const matchesSearch =
         searchValue === "" ||
-        snippet.title.toLowerCase().includes(searchValue) ||
-        snippet.description.toLowerCase().includes(searchValue) ||
+        snippetTitle.toLowerCase().includes(searchValue) ||
+        snippetDescription.toLowerCase().includes(searchValue) ||
         collectionName.toLowerCase().includes(searchValue) ||
-        snippet.tags.some((currentTag) =>
-          currentTag.toLowerCase().includes(searchValue),
+        snippetTags.some((currentTag) =>
+          String(currentTag).toLowerCase().includes(searchValue),
         );
       const snippetCollectionId = getCollectionId(snippet.collection);
       const matchesCollection =
@@ -57,7 +60,7 @@ export default function SnippetWorkspace() {
         snippetCollectionId === collection;
       const matchesLanguage =
         language === "All" || snippet.language === language;
-      const matchesTag = tag === "All" || snippet.tags.includes(tag);
+      const matchesTag = tag === "All" || snippetTags.includes(tag);
 
       return (
         matchesSearch && matchesCollection && matchesLanguage && matchesTag
@@ -66,18 +69,28 @@ export default function SnippetWorkspace() {
   }, [collection, language, query, snippets, tag]);
 
   return (
-    <section className="grid min-w-0 gap-4 xl:grid-cols-[minmax(280px,380px)_minmax(0,1fr)] xl:gap-6">
-      <aside className="min-w-0 space-y-3">
+    <section className="grid min-w-0 gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
+      <aside className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-[#0c1328]/90">
+        <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
+          <h2 className="text-base font-bold text-slate-950 dark:text-white">
+            Recent Snippets
+          </h2>
+          <span className="text-xs font-semibold text-violet-500">
+            View all
+          </span>
+        </div>
         {isLoading ? (
-          <div className="rounded-2xl bg-white p-6 text-center text-sm text-slate-500 shadow-sm dark:border dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          <div className="p-6 text-center text-sm text-slate-500 dark:text-slate-400">
             Loading snippets...
           </div>
         ) : (
-          <SnippetList
-            snippets={filteredSnippets}
-            selectedSnippet={selectedSnippet || demoSnippets[0]}
-            onSelectSnippet={setSelectedSnippet}
-          />
+          <div className="max-h-[360px] overflow-y-auto p-3">
+            <SnippetList
+              snippets={filteredSnippets}
+              selectedSnippet={selectedSnippet || demoSnippets[0]}
+              onSelectSnippet={setSelectedSnippet}
+            />
+          </div>
         )}
       </aside>
 
@@ -95,7 +108,7 @@ export default function SnippetWorkspace() {
           onToggleFavorite={toggleSelectedSnippetFavorite}
         />
       ) : (
-        <article className="min-w-0 rounded-2xl bg-white p-6 text-center text-slate-500 shadow-sm transition-colors dark:border dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+        <article className="min-w-0 rounded-2xl border border-slate-200 bg-white/85 p-6 text-center text-slate-500 shadow-sm transition-colors dark:border-slate-800 dark:bg-[#0c1328]/90 dark:text-slate-400">
           Create a snippet or connect with a valid token to load your saved
           snippets.
         </article>
