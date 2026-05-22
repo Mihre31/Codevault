@@ -42,7 +42,9 @@ function Feature({ icon, title, text }) {
 }
 
 export default function AuthPage() {
-  const resetToken = new URL(window.location.href).searchParams.get("resetToken");
+  const resetToken = new URL(window.location.href).searchParams.get(
+    "resetToken",
+  );
   const [mode, setMode] = useState(resetToken ? "reset" : "login");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -115,7 +117,7 @@ export default function AuthPage() {
   }
 
   return (
-    <main className="relative h-screen overflow-hidden bg-[#050816] px-5 py-5 text-slate-100 sm:px-8 lg:px-12">
+    <main className="relative min-h-screen overflow-x-hidden overflow-y-auto bg-[#050816] px-5 py-5 text-slate-100 sm:px-8 lg:px-12">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.08)_1px,transparent_1px)] bg-[size:88px_88px]" />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_19%_21%,rgba(99,102,241,0.16),transparent_24%),radial-gradient(circle_at_72%_45%,rgba(124,58,237,0.17),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0.12),rgba(2,6,23,0.76))]" />
 
@@ -127,7 +129,7 @@ export default function AuthPage() {
         English
       </button>
 
-      <section className="relative z-10 mx-auto grid h-[calc(100vh-40px)] max-w-[1440px] gap-8 lg:grid-cols-[520px_minmax(0,1fr)] lg:items-center">
+      <section className="relative z-10 mx-auto grid min-h-[calc(100svh-40px)] max-w-[1440px] gap-8 pb-8 pt-16 sm:pt-12 lg:grid-cols-[520px_minmax(0,1fr)] lg:items-center lg:py-0">
         <div className="min-h-0">
           <div className="rounded-3xl border border-slate-700/70 bg-slate-950/45 p-6 shadow-[0_30px_90px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:p-8">
             <div className="mb-7 flex items-center gap-4">
@@ -177,7 +179,9 @@ export default function AuthPage() {
             <form className="space-y-4" onSubmit={handleSubmit}>
               {isSignup && (
                 <label className="block">
-                  <span className="text-sm font-bold text-white">Full name</span>
+                  <span className="text-sm font-bold text-white">
+                    Full name
+                  </span>
                   <div className="mt-2 flex h-12 items-center gap-3 rounded-lg border border-slate-700 bg-slate-950/40 px-4 text-slate-300 focus-within:border-violet-400/70">
                     <Code2 size={19} className="text-slate-400" />
                     <input
@@ -284,7 +288,9 @@ export default function AuthPage() {
                 </>
               ) : (
                 <>
-                  {isSignup ? "Already have an account?" : "Don't have an account?"}{" "}
+                  {isSignup
+                    ? "Already have an account?"
+                    : "Don't have an account?"}{" "}
                   <button
                     type="button"
                     onClick={() => switchMode(isSignup ? "login" : "signup")}
@@ -353,13 +359,15 @@ export default function AuthPage() {
                 {"    "}secure: <span className="text-rose-300">true</span>,
                 {"\n"}
                 <span className="text-slate-500">4 </span>
-                {"    "}sync: <span className="text-emerald-300">'real-time'</span>,
-                {"\n"}
+                {"    "}sync:{" "}
+                <span className="text-emerald-300">'real-time'</span>,{"\n"}
                 <span className="text-slate-500">5 </span>
-                {"    "}developers: <span className="text-amber-300">'happy'</span>
+                {"    "}developers:{" "}
+                <span className="text-amber-300">'happy'</span>
                 {"\n"}
                 <span className="text-slate-500">6 </span>
-                {"  };"}{"\n"}
+                {"  };"}
+                {"\n"}
                 <span className="text-slate-500">7 </span>
                 {"}"}
               </code>
