@@ -7,14 +7,14 @@ function App() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
   const checkAuth = useAuthStore((state) => state.checkAuth);
-  const clearOAuthTokenFromUrl = useAuthStore(
-    (state) => state.clearOAuthTokenFromUrl,
+  const clearOAuthParamsFromUrl = useAuthStore(
+    (state) => state.clearOAuthParamsFromUrl,
   );
 
   useEffect(() => {
     checkAuth();
-    clearOAuthTokenFromUrl();
-  }, [checkAuth, clearOAuthTokenFromUrl]);
+    clearOAuthParamsFromUrl();
+  }, [checkAuth, clearOAuthParamsFromUrl]);
 
   if (isCheckingAuth) {
     return (

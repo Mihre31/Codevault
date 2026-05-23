@@ -15,6 +15,7 @@ export default function CodeVaultDashboard() {
   const isCreateOpen = useDashboardStore((state) => state.isCreateOpen);
   const loadSnippets = useDashboardStore((state) => state.loadSnippets);
   const theme = useDashboardStore((state) => state.theme);
+  const view = useDashboardStore((state) => state.view);
   const user = useAuthStore((state) => state.user);
   const isDark = theme === "dark";
   const displayName = user?.fullName || user?.name || "Developer";
@@ -43,10 +44,12 @@ export default function CodeVaultDashboard() {
           <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h1 className="text-2xl font-bold tracking-tight text-slate-950 dark:text-white">
-                Welcome back, {displayName}!
+                {view === "trash" ? "Trash" : `Welcome back, ${displayName}!`}
               </h1>
               <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Here's what's happening with your code snippets.
+                {view === "trash"
+                  ? "Restore deleted snippets or remove them permanently."
+                  : "Here's what's happening with your code snippets."}
               </p>
             </div>
             <div className="w-fit rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm dark:border-slate-800 dark:bg-[#0c1328] dark:text-slate-300">
@@ -54,11 +57,13 @@ export default function CodeVaultDashboard() {
             </div>
           </div>
 
-          <DashboardStats />
-
-          <DashboardPortability />
-
-          <DashboardFilters />
+          {view !== "trash" && (
+            <>
+              <DashboardStats />
+              <DashboardPortability />
+              <DashboardFilters />
+            </>
+          )}
 
           <SnippetWorkspace />
         </section>

@@ -4,11 +4,7 @@ import User from "../models/user.model.js";
 
 export async function protect(req, res, next) {
   try {
-    const authHeader = req.headers.authorization;
-    const bearerToken = authHeader?.startsWith("Bearer ")
-      ? authHeader.split(" ")[1]
-      : null;
-    const token = bearerToken || req.cookies?.jwt;
+    const token = req.cookies?.jwt;
 
     if (!token) {
       res.status(401);

@@ -21,13 +21,17 @@ export default function DashboardHeader() {
   const setCollection = useDashboardStore((state) => state.setCollection);
   const snippets = useDashboardStore((state) => state.snippets);
   const setTag = useDashboardStore((state) => state.setTag);
+  const setView = useDashboardStore((state) => state.setView);
+  const trashedSnippets = useDashboardStore((state) => state.trashedSnippets);
+  const view = useDashboardStore((state) => state.view);
 
   const navItems = [
     {
       icon: <LayoutDashboard size={19} />,
       label: "Dashboard",
-      active: collection === "All",
+      active: view === "dashboard" && collection === "All",
       onClick: () => {
+        setView("dashboard");
         setCollection("All");
         setTag("All");
       },
@@ -35,26 +39,36 @@ export default function DashboardHeader() {
     {
       icon: <Archive size={19} />,
       label: "All Snippets",
-      active: collection === "All",
-      onClick: () => setCollection("All"),
+      active: view === "dashboard" && collection === "All",
+      onClick: () => {
+        setView("dashboard");
+        setCollection("All");
+      },
     },
     {
       icon: <Heart size={19} />,
       label: "Favorites",
       active: false,
-      onClick: () => setTag("All"),
+      onClick: () => {
+        setView("dashboard");
+        setTag("All");
+      },
     },
     {
       icon: <Folder size={19} />,
       label: "Collections",
       active: false,
-      onClick: () => setCollection("All"),
+      onClick: () => {
+        setView("dashboard");
+        setCollection("All");
+      },
     },
     {
       icon: <Trash2 size={19} />,
       label: "Trash",
-      active: false,
-      onClick: () => {},
+      active: view === "trash",
+      badge: trashedSnippets.length,
+      onClick: () => setView("trash"),
     },
   ];
 
@@ -95,7 +109,12 @@ export default function DashboardHeader() {
             }`}
           >
             {item.icon}
-            {item.label}
+            <span className="min-w-0 flex-1 text-left">{item.label}</span>
+            {item.badge > 0 && (
+              <span className="rounded-full bg-red-500/15 px-2 py-0.5 text-xs text-red-500 dark:text-red-300">
+                {item.badge}
+              </span>
+            )}
           </button>
         ))}
       </nav>
@@ -123,7 +142,10 @@ export default function DashboardHeader() {
                 <button
                   key={collectionId || currentCollection.name}
                   type="button"
-                  onClick={() => setCollection(collectionId || "All")}
+                  onClick={() => {
+                    setView("dashboard");
+                    setCollection(collectionId || "All");
+                  }}
                   className={`flex items-center justify-between rounded-xl px-3 py-2 text-left text-sm transition ${
                     collection === collectionId
                       ? "bg-slate-950 text-white dark:bg-white dark:text-slate-950"

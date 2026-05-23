@@ -3,7 +3,7 @@ import crypto from "crypto";
 import { ENV } from "../config/env.js";
 import User from "../models/user.model.js";
 import { sendPasswordResetEmail, sendWelcomeEmail } from "../utils/email.js";
-import generateToken from "../utils/generateToken.js";
+import generateToken, { getCookieOptions } from "../utils/generateToken.js";
 
 export async function signup(req, res) {
   const { fullName, name, email, password } = req.body;
@@ -38,14 +38,13 @@ export async function signup(req, res) {
       user.password = hashedPassword;
       await user.save();
 
-      const token = generateToken(user._id, res);
+      generateToken(user._id, res);
 
       return res.status(200).json({
         _id: user._id,
         fullName: user.fullName,
         email: user.email,
         profilePic: user.profilePic,
-        token,
       });
     }
 
@@ -60,7 +59,7 @@ export async function signup(req, res) {
     }
 
     await newUser.save();
-    const token = generateToken(newUser._id, res);
+    generateToken(newUser._id, res);
 
     try {
       await sendWelcomeEmail({
@@ -76,7 +75,6 @@ export async function signup(req, res) {
       fullName: newUser.fullName,
       email: newUser.email,
       profilePic: newUser.profilePic,
-      token,
     });
   } catch (error) {
     console.log("Error in signup controller", error);
@@ -114,14 +112,13 @@ export async function login(req, res) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = generateToken(user._id, res);
+    generateToken(user._id, res);
 
     return res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
       email: user.email,
       profilePic: user.profilePic,
-      token,
     });
   } catch (error) {
     console.log("Error in login controller", error);
@@ -231,10 +228,8 @@ export async function resetPassword(req, res) {
 
 export function logout(req, res) {
   res.cookie("jwt", "", {
+    ...getCookieOptions(),
     maxAge: 0,
-    httpOnly: true,
-    sameSite: "strict",
-    secure: ENV.NODE_ENV === "production",
   });
 
   return res.status(200).json({ message: "Logged out successfully" });
@@ -252,7 +247,7 @@ export function getMe(req, res) {
 }
 
 export function googleCallback(req, res) {
-  const token = generateToken(req.user._id, res);
+  generateToken(req.user._id, res);
 
-  return res.redirect(`${ENV.CLIENT_URL}?token=${encodeURIComponent(token)}`);
+  return res.redirect(ENV.CLIENT_URL);
 }
