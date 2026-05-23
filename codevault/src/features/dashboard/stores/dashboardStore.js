@@ -8,7 +8,10 @@ import { logout as logoutRequest } from "../../../services/authApi";
 import {
   createSnippet,
   deleteSnippet,
+  getTrashSnippets,
   getSnippets,
+  permanentlyDeleteSnippet,
+  restoreSnippet,
   toggleSnippetFavorite,
   updateSnippet,
 } from "../../../services/snippetApi";
@@ -247,6 +250,8 @@ export const useDashboardStore = create((set, get) => ({
   snippets: [],
   tag: "All",
   theme: "dark",
+  trashedSnippets: [],
+  view: "dashboard",
 
   closeCreateSnippet: () => set({ isCreateOpen: false }),
   copyCode: async () => {
@@ -304,10 +309,11 @@ export const useDashboardStore = create((set, get) => ({
         tags: normalizeTagsInput(draftTags),
         title: trimmedTitle,
       }),
+      view: "dashboard",
     });
   },
   deleteSelectedSnippet: async () => {
-    const { selectedSnippet, snippets } = get();
+    const { selectedSnippet, snippets, trashedSnippets, view } = get();
     if (!selectedSnippet) return;
 
     if (selectedSnippet.isDraft) {
@@ -316,18 +322,57 @@ export const useDashboardStore = create((set, get) => ({
     }
 
     const snippetId = getSnippetId(selectedSnippet);
+    const deleteChoice = window
+      .prompt(
+        'Type "trash" to move this snippet to Trash, or "delete" to permanently delete it.',
+        view === "trash" ? "delete" : "trash",
+      )
+      ?.trim()
+      .toLowerCase();
+
+    if (!deleteChoice) return;
 
     try {
       set({ error: "" });
-      await deleteSnippet(snippetId);
+
+      if (deleteChoice === "delete") {
+        await permanentlyDeleteSnippet(snippetId);
+
+        const nextSnippets = snippets.filter(
+          (snippet) => getSnippetId(snippet) !== snippetId,
+        );
+        const nextTrashedSnippets = trashedSnippets.filter(
+          (snippet) => getSnippetId(snippet) !== snippetId,
+        );
+
+        set({
+          portabilityMessage: "Snippet permanently deleted.",
+          selectedSnippet:
+            view === "trash"
+              ? nextTrashedSnippets[0] || null
+              : nextSnippets[0] || null,
+          snippets: nextSnippets,
+          trashedSnippets: nextTrashedSnippets,
+        });
+        return;
+      }
+
+      if (deleteChoice !== "trash") {
+        set({ error: 'Use "trash" or "delete" for the delete action.' });
+        return;
+      }
+
+      const trashedSnippet = await deleteSnippet(snippetId);
 
       const nextSnippets = snippets.filter(
         (snippet) => getSnippetId(snippet) !== snippetId,
       );
 
       set({
+        portabilityMessage: "Snippet moved to Trash.",
         selectedSnippet: nextSnippets[0] || null,
         snippets: nextSnippets,
+        trashedSnippets: [trashedSnippet, ...trashedSnippets],
       });
     } catch (apiError) {
       set({ error: apiError.message });
@@ -525,15 +570,17 @@ export const useDashboardStore = create((set, get) => ({
   loadSnippets: async () => {
     try {
       set({ error: "", isLoading: true });
-      const [snippets, collections] = await Promise.all([
+      const [snippets, collections, trashedSnippets] = await Promise.all([
         getSnippets(),
         getCollections(),
+        getTrashSnippets(),
       ]);
       set({
         collections,
         isLoading: false,
         selectedSnippet: snippets[0] || null,
         snippets,
+        trashedSnippets,
       });
     } catch (apiError) {
       set({
@@ -542,6 +589,7 @@ export const useDashboardStore = create((set, get) => ({
         isLoading: false,
         selectedSnippet: null,
         snippets: [],
+        trashedSnippets: [],
       });
     }
   },
@@ -566,6 +614,7 @@ export const useDashboardStore = create((set, get) => ({
       draftTags: "",
       draftTitle: "",
       isCreateOpen: true,
+      view: "dashboard",
     });
   },
   saveSelectedSnippetCode: async (code) => {
@@ -672,6 +721,40 @@ export const useDashboardStore = create((set, get) => ({
   setQuery: (query) => set({ query }),
   setSelectedSnippet: (selectedSnippet) => set({ selectedSnippet }),
   setTag: (tag) => set({ tag }),
+  setView: (view) => {
+    const { snippets, trashedSnippets } = get();
+
+    set({
+      collection: view === "trash" ? "All" : get().collection,
+      selectedSnippet:
+        view === "trash"
+          ? trashedSnippets[0] || null
+          : snippets[0] || null,
+      tag: view === "trash" ? "All" : get().tag,
+      view,
+    });
+  },
+  restoreSelectedSnippet: async () => {
+    const { selectedSnippet, snippets, trashedSnippets } = get();
+    if (!selectedSnippet) return;
+
+    try {
+      set({ error: "" });
+      const restoredSnippet = await restoreSnippet(getSnippetId(selectedSnippet));
+      const nextTrashedSnippets = trashedSnippets.filter(
+        (snippet) => getSnippetId(snippet) !== getSnippetId(restoredSnippet),
+      );
+
+      set({
+        portabilityMessage: "Snippet restored.",
+        selectedSnippet: nextTrashedSnippets[0] || null,
+        snippets: [restoredSnippet, ...snippets],
+        trashedSnippets: nextTrashedSnippets,
+      });
+    } catch (apiError) {
+      set({ error: apiError.message });
+    }
+  },
   toggleFilters: () =>
     set((state) => ({ isFilterOpen: !state.isFilterOpen })),
   toggleSelectedSnippetFavorite: async () => {

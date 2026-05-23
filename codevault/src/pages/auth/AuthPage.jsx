@@ -98,11 +98,11 @@ export default function AuthPage() {
         return;
       }
 
-      const data = isSignup
+      const user = isSignup
         ? await signup({ fullName, email, password })
         : await login({ email, password });
 
-      authenticate(data.token, data);
+      authenticate(user);
     } catch (authError) {
       setError(authError.message);
     } finally {

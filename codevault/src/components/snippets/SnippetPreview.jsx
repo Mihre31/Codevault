@@ -81,11 +81,13 @@ function getLanguageExtension(language) {
 export default function SnippetPreview({
   copied,
   isDraft = false,
+  isTrash = false,
   onCodeSave,
   onCopy,
   onDelete,
   onDescriptionSave,
   onEdit,
+  onRestore,
   onToggleFavorite,
   snippet,
 }) {
@@ -120,13 +122,15 @@ export default function SnippetPreview({
             {snippet.title}
           </h2>
           <p
-            contentEditable
+            contentEditable={!isTrash}
             suppressContentEditableWarning
             role="textbox"
             tabIndex={0}
-            onBlur={(event) =>
-              onDescriptionSave(event.currentTarget.textContent.trim())
-            }
+            onBlur={(event) => {
+              if (!isTrash) {
+                onDescriptionSave(event.currentTarget.textContent.trim());
+              }
+            }}
             className="mt-1 line-clamp-2 max-w-[520px] text-sm text-slate-500 outline-none dark:text-slate-400"
           >
             {snippet.description}
@@ -137,9 +141,11 @@ export default function SnippetPreview({
           <SnippetActions
             copied={copied}
             isFavorite={snippet.favorite}
+            isTrash={isTrash}
             onCopy={onCopy}
             onDelete={onDelete}
             onEdit={onEdit}
+            onRestore={onRestore}
             onToggleFavorite={onToggleFavorite}
           />
         </div>
@@ -164,6 +170,7 @@ export default function SnippetPreview({
           height="300px"
           theme={oneDark}
           extensions={[codeVaultEditorTheme, getLanguageExtension(languageLabel)]}
+          editable={!isTrash}
           onChange={(value) => setCodeDraft(value)}
           basicSetup={{
             autocompletion: true,
@@ -175,15 +182,17 @@ export default function SnippetPreview({
           className="overflow-hidden rounded-lg bg-slate-950 text-sm ring-1 ring-slate-800 transition focus-within:ring-violet-500/70"
           placeholder="// Start writing your snippet here"
         />
-        <div className="mt-4 flex justify-end">
-          <button
-            type="button"
-            onClick={() => onCodeSave(codeDraft)}
-            className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:scale-[1.01]"
-          >
-            {isDraft ? "Save Snippet" : "Save Code"}
-          </button>
-        </div>
+        {!isTrash && (
+          <div className="mt-4 flex justify-end">
+            <button
+              type="button"
+              onClick={() => onCodeSave(codeDraft)}
+              className="rounded-xl bg-gradient-to-r from-indigo-500 to-violet-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-violet-500/20 transition hover:scale-[1.01]"
+            >
+              {isDraft ? "Save Snippet" : "Save Code"}
+            </button>
+          </div>
+        )}
       </div>
     </article>
   );

@@ -55,11 +55,7 @@ export function logout() {
 }
 
 export function getMe() {
-  const token = localStorage.getItem("codevault_token");
-
-  return request("/auth/me", {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  return request("/auth/me");
 }
 
 export function startGoogleAuth() {

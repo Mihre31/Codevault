@@ -41,6 +41,11 @@ const snippetSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    deletedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,

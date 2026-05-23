@@ -14,6 +14,8 @@ export default function SnippetWorkspace() {
   const selectedSnippet = useDashboardStore((state) => state.selectedSnippet);
   const snippets = useDashboardStore((state) => state.snippets);
   const tag = useDashboardStore((state) => state.tag);
+  const trashedSnippets = useDashboardStore((state) => state.trashedSnippets);
+  const view = useDashboardStore((state) => state.view);
   const copyCode = useDashboardStore((state) => state.copyCode);
   const deleteSelectedSnippet = useDashboardStore(
     (state) => state.deleteSelectedSnippet,
@@ -27,6 +29,9 @@ export default function SnippetWorkspace() {
   const saveSelectedSnippetDescription = useDashboardStore(
     (state) => state.saveSelectedSnippetDescription,
   );
+  const restoreSelectedSnippet = useDashboardStore(
+    (state) => state.restoreSelectedSnippet,
+  );
   const setSelectedSnippet = useDashboardStore(
     (state) => state.setSelectedSnippet,
   );
@@ -35,8 +40,9 @@ export default function SnippetWorkspace() {
   );
   const filteredSnippets = useMemo(() => {
     const searchValue = query.toLowerCase().trim();
+    const sourceSnippets = view === "trash" ? trashedSnippets : snippets;
 
-    return snippets.filter((snippet) => {
+    return sourceSnippets.filter((snippet) => {
       const snippetTitle = String(snippet.title || "");
       const snippetDescription = String(snippet.description || "");
       const snippetTags = Array.isArray(snippet.tags) ? snippet.tags : [];
@@ -55,28 +61,33 @@ export default function SnippetWorkspace() {
         );
       const snippetCollectionId = getCollectionId(snippet.collection);
       const matchesCollection =
+        view === "trash" ||
         collection === "All" ||
         (collection === "__none" && !snippetCollectionId) ||
         snippetCollectionId === collection;
       const matchesLanguage =
+        view === "trash" ||
         language === "All" || snippet.language === language;
-      const matchesTag = tag === "All" || snippetTags.includes(tag);
+      const matchesTag =
+        view === "trash" || tag === "All" || snippetTags.includes(tag);
 
       return (
         matchesSearch && matchesCollection && matchesLanguage && matchesTag
       );
     });
-  }, [collection, language, query, snippets, tag]);
+  }, [collection, language, query, snippets, tag, trashedSnippets, view]);
 
   return (
     <section className="grid min-w-0 gap-5 xl:grid-cols-[330px_minmax(0,1fr)]">
       <aside className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white/85 shadow-sm dark:border-slate-800 dark:bg-[#0c1328]/90">
         <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
           <h2 className="text-base font-bold text-slate-950 dark:text-white">
-            Recent Snippets
+            {view === "trash" ? "Trash" : "Recent Snippets"}
           </h2>
           <span className="text-xs font-semibold text-violet-500">
-            View all
+            {view === "trash"
+              ? `${trashedSnippets.length} deleted`
+              : "View all"}
           </span>
         </div>
         {isLoading ? (
@@ -87,7 +98,9 @@ export default function SnippetWorkspace() {
           <div className="max-h-[360px] overflow-y-auto p-3">
             <SnippetList
               snippets={filteredSnippets}
-              selectedSnippet={selectedSnippet || demoSnippets[0]}
+              selectedSnippet={
+                selectedSnippet || (view === "trash" ? null : demoSnippets[0])
+              }
               onSelectSnippet={setSelectedSnippet}
             />
           </div>
@@ -100,17 +113,20 @@ export default function SnippetWorkspace() {
           snippet={selectedSnippet}
           copied={copied}
           isDraft={Boolean(selectedSnippet.isDraft)}
+          isTrash={view === "trash"}
           onCodeSave={saveSelectedSnippetCode}
           onCopy={copyCode}
           onDelete={deleteSelectedSnippet}
           onDescriptionSave={saveSelectedSnippetDescription}
           onEdit={editSelectedSnippetTitle}
+          onRestore={restoreSelectedSnippet}
           onToggleFavorite={toggleSelectedSnippetFavorite}
         />
       ) : (
         <article className="min-w-0 rounded-2xl border border-slate-200 bg-white/85 p-6 text-center text-slate-500 shadow-sm transition-colors dark:border-slate-800 dark:bg-[#0c1328]/90 dark:text-slate-400">
-          Create a snippet or connect with a valid token to load your saved
-          snippets.
+          {view === "trash"
+            ? "Trash is empty. Deleted snippets will appear here before permanent deletion."
+            : "Create a snippet or sign in again if your saved snippets do not load."}
         </article>
       )}
     </section>

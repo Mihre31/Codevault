@@ -11,15 +11,36 @@ function normalizeTags(tags) {
 }
 
 async function findOwnedSnippet(snippetId, userId) {
+  return Snippet.findOne({ _id: snippetId, user: userId, deletedAt: null });
+}
+
+async function findOwnedSnippetIncludingTrash(snippetId, userId) {
   return Snippet.findOne({ _id: snippetId, user: userId });
 }
 
 export async function getSnippets(req, res, next) {
   try {
-    const snippets = await Snippet.find({ user: req.user._id })
+    const snippets = await Snippet.find({ user: req.user._id, deletedAt: null })
       .populate("snippetCollection", "name description")
       .sort({
         updatedAt: -1,
+      });
+
+    res.json(snippets);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getTrashSnippets(req, res, next) {
+  try {
+    const snippets = await Snippet.find({
+      user: req.user._id,
+      deletedAt: { $ne: null },
+    })
+      .populate("snippetCollection", "name description")
+      .sort({
+        deletedAt: -1,
       });
 
     res.json(snippets);
@@ -144,8 +165,52 @@ export async function deleteSnippet(req, res, next) {
       throw new Error("Snippet not found");
     }
 
+    snippet.deletedAt = new Date();
+    const deletedSnippet = await snippet.save();
+    await deletedSnippet.populate("snippetCollection", "name description");
+
+    res.json(deletedSnippet);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function restoreSnippet(req, res, next) {
+  try {
+    const snippet = await findOwnedSnippetIncludingTrash(
+      req.params.id,
+      req.user._id,
+    );
+
+    if (!snippet) {
+      res.status(404);
+      throw new Error("Snippet not found");
+    }
+
+    snippet.deletedAt = null;
+    const restoredSnippet = await snippet.save();
+    await restoredSnippet.populate("snippetCollection", "name description");
+
+    res.json(restoredSnippet);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function permanentlyDeleteSnippet(req, res, next) {
+  try {
+    const snippet = await findOwnedSnippetIncludingTrash(
+      req.params.id,
+      req.user._id,
+    );
+
+    if (!snippet) {
+      res.status(404);
+      throw new Error("Snippet not found");
+    }
+
     await snippet.deleteOne();
-    res.json({ message: "Snippet deleted" });
+    res.json({ message: "Snippet permanently deleted" });
   } catch (error) {
     next(error);
   }

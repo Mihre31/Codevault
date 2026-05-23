@@ -15,8 +15,7 @@ export default function DashboardError() {
       {message}
       {shouldShowAuthHint && (
         <>
-          . Login first, then save your token as{" "}
-          <code>localStorage.codevault_token</code>, or use the auth cookie.
+          . Login first, then make sure your browser allows the auth cookie.
         </>
       )}
     </section>
