@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import DashboardHeader from "../../components/layout/DashboardHeader";
 import MotionBackground from "../../components/ui/MotionBackground";
 import CreateSnippetModal from "./components/CreateSnippetModal";
+import DeleteSnippetDialog from "./components/DeleteSnippetDialog";
 import DashboardError from "./components/DashboardError";
 import DashboardFilters from "./components/DashboardFilters";
 import DashboardPortability from "./components/DashboardPortability";
@@ -38,6 +39,7 @@ export default function CodeVaultDashboard() {
           <DashboardTopbar />
 
           {isCreateOpen && <CreateSnippetModal />}
+          <DeleteSnippetDialog />
 
           <DashboardError />
 

@@ -1,6 +1,7 @@
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import express from "express";
+import helmet from "helmet";
 import connectDB from "./config/db.js";
 import { ENV } from "./config/env.js";
 import passport from "./config/passport.js";
@@ -8,10 +9,16 @@ import authRoutes from "./routes/auth.routes.js";
 import collectionRoutes from "./routes/collection.routes.js";
 import snippetRoutes from "./routes/snippet.routes.js";
 import { errorHandler, notFound } from "./middleware/error.middleware.js";
+import { apiLimiter } from "./middleware/rateLimit.middleware.js";
 
 const app = express();
 const port = ENV.PORT;
 
+if (ENV.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
+app.use(helmet());
 app.use(
   cors({
     origin: ENV.CLIENT_URL,
@@ -27,6 +34,7 @@ app.get("/", (req, res) => {
   res.json({ message: "CodeVault API is running" });
 });
 
+app.use("/api", apiLimiter);
 app.use("/api/auth", authRoutes);
 app.use("/api/collections", collectionRoutes);
 app.use("/api/snippets", snippetRoutes);
