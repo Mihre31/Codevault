@@ -240,6 +240,7 @@ export const useDashboardStore = create((set, get) => ({
   draftTitle: "",
   error: "",
   isCreateOpen: false,
+  isDeleteOpen: false,
   isFilterOpen: false,
   isImporting: false,
   isLoading: true,
@@ -254,6 +255,7 @@ export const useDashboardStore = create((set, get) => ({
   view: "dashboard",
 
   closeCreateSnippet: () => set({ isCreateOpen: false }),
+  closeDeleteSnippet: () => set({ isDeleteOpen: false }),
   copyCode: async () => {
     const { selectedSnippet } = get();
     if (!selectedSnippet) return;
@@ -313,7 +315,7 @@ export const useDashboardStore = create((set, get) => ({
     });
   },
   deleteSelectedSnippet: async () => {
-    const { selectedSnippet, snippets, trashedSnippets, view } = get();
+    const { selectedSnippet, snippets } = get();
     if (!selectedSnippet) return;
 
     if (selectedSnippet.isDraft) {
@@ -321,21 +323,19 @@ export const useDashboardStore = create((set, get) => ({
       return;
     }
 
-    const snippetId = getSnippetId(selectedSnippet);
-    const deleteChoice = window
-      .prompt(
-        'Type "trash" to move this snippet to Trash, or "delete" to permanently delete it.',
-        view === "trash" ? "delete" : "trash",
-      )
-      ?.trim()
-      .toLowerCase();
+    set({ isDeleteOpen: true });
+  },
+  confirmDeleteSelectedSnippet: async (deleteChoice) => {
+    const { selectedSnippet, snippets, trashedSnippets, view } = get();
+    if (!selectedSnippet) return;
 
-    if (!deleteChoice) return;
+    const snippetId = getSnippetId(selectedSnippet);
+    const normalizedDeleteChoice = String(deleteChoice || "").toLowerCase();
 
     try {
-      set({ error: "" });
+      set({ error: "", isDeleteOpen: false });
 
-      if (deleteChoice === "delete") {
+      if (normalizedDeleteChoice === "delete") {
         await permanentlyDeleteSnippet(snippetId);
 
         const nextSnippets = snippets.filter(
@@ -357,8 +357,13 @@ export const useDashboardStore = create((set, get) => ({
         return;
       }
 
-      if (deleteChoice !== "trash") {
-        set({ error: 'Use "trash" or "delete" for the delete action.' });
+      if (normalizedDeleteChoice !== "trash") {
+        set({ error: "Choose a delete action first." });
+        return;
+      }
+
+      if (view === "trash") {
+        set({ error: "This snippet is already in Trash." });
         return;
       }
 
@@ -746,10 +751,14 @@ export const useDashboardStore = create((set, get) => ({
       );
 
       set({
+        collection: "All",
+        language: "All",
         portabilityMessage: "Snippet restored.",
-        selectedSnippet: nextTrashedSnippets[0] || null,
+        selectedSnippet: restoredSnippet,
         snippets: [restoredSnippet, ...snippets],
+        tag: "All",
         trashedSnippets: nextTrashedSnippets,
+        view: "dashboard",
       });
     } catch (apiError) {
       set({ error: apiError.message });
